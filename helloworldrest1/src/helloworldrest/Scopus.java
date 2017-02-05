@@ -5,10 +5,12 @@ import java.io.*;
 import java.util.*;
 
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 public class Scopus  {
 	
 	private String name;
@@ -24,9 +26,19 @@ public class Scopus  {
               try  {
             	  	 sb.append('?');
                      for(String  key : data.keySet())  {
+                    	 	if(key.contains("authSubject")){
+                    	 		data.get(key).split(",");
+                    	 		for(int i=0;i<4;i++){
+	                    	 		sb.append(URLEncoder.encode(key,  "UTF-8"));
+	                                sb.append('=');
+	                                sb.append(URLEncoder.encode(data.get(key).split(",")[i],  "UTF-8"));                            
+	                                sb.append('&');
+                    	 		}
+                    	 		continue;
+                    	 	}
                             sb.append(URLEncoder.encode(key,  "UTF-8"));
                             sb.append('=');
-                            sb.append(URLEncoder.encode(data.get(key),  "UTF-8"));
+                            sb.append(URLEncoder.encode(data.get(key),  "UTF-8"));                            
                             sb.append('&');
                      }
               }  catch  (UnsupportedEncodingException e)  {
@@ -36,10 +48,7 @@ public class Scopus  {
        }
        
        public String webScraping()  throws  Exception  {
-           //URL  url=new  URL("https://www.scopus.com/results/authorNamesList.uri?sort=count-f&src=al&sid=12ABEFC7BA5E633A2CA3A12D8253D8A4.wsnAw8kcdt7IPYLO0V48gA%3a110&sot=al&sdt=al&sl=54&s=AUTH--LAST--NAME%28EQUALS%28vento%29%29+AND+AUTH--FIRST%28mario%29&st1=vento&st2=mario&orcidId=&selectionPageSearch=anl&reselectAuthor=false&activeFlag=false&showDocument=false&resultsPerPage=20&offset=1&jtp=false&currentPage=1&previousSelectionCount=0&tooManySelections=false&previousResultCount=0&authSubject=LFSC&authSubject=HLSC&authSubject=PHSC&authSubject=SOSC&exactAuthorSearch=true&showFullList=false&authorPreferredName=&origin=searchauthorfreelookup&affiliationId=&txGid=12ABEFC7BA5E633A2CA3A12D8253D8A4.wsnAw8kcdt7IPYLO0V48gA%3a11&");
-    	   URL  url=new  URL("https://www.scopus.com/results/authorNamesList.uri?sort=count-f&src=al&sid=12ABEFC7BA5E633A2CA3A12D8253D8A4.wsnAw8kcdt7IPYLO0V48gA%3a110&sot=al&sdt=al&sl=54&s=AUTH--LAST--NAME%28EQUALS%28"+surname+"%29%29+AND+AUTH--FIRST%28"+name+"%29&st1="+surname+"&st2="+name+"&orcidId=&selectionPageSearch=anl&reselectAuthor=false&activeFlag=false&showDocument=false&resultsPerPage=20&offset=1&jtp=false&currentPage=1&previousSelectionCount=0&tooManySelections=false&previousResultCount=0&authSubject=LFSC&authSubject=HLSC&authSubject=PHSC&authSubject=SOSC&exactAuthorSearch=true&showFullList=false&authorPreferredName=&origin=searchauthorfreelookup&affiliationId=&txGid=12ABEFC7BA5E633A2CA3A12D8253D8A4.wsnAw8kcdt7IPYLO0V48gA%3a11&");
-           //URL  url=new  URL("https://www.scopus.com/search/submit/authorFreeLookup.uri");
-    	   //String  url="https://www.scopus.com/results/authorNamesList.uri";
+    	   String  baseUrl="https://www.scopus.com/results/authorNamesList.uri";
            Map<String,String>  form=new  HashMap<String,String>();
            
            form.put("sort",  "count-f");
@@ -48,7 +57,7 @@ public class Scopus  {
            form.put("sot",  "al");
            form.put("sdt",  "al");
            form.put("sl",  "54");
-           form.put("s",  "AUTH--LAST--NAME(EQUALS("+surname+")) AND AUTH--FIRST("+name+")");
+           form.put("s",  "AUTH--LAST--NAME(EQUALS("+surname+"))%20AND%20AUTH--FIRST("+name+")");
            form.put("st1",  surname);
            form.put("st2",  name);
            form.put("orcidId",  "");
@@ -62,45 +71,19 @@ public class Scopus  {
            form.put("currentPage",  "1");
            form.put("previousSelectionCount",  "0");
            form.put("tooManySelections",  "false");
-           form.put("previousResultCount",  "0");
-           form.put("authSubject",  "LFSC");
-           form.put("authSubject",  "HLSC");
-           form.put("authSubject",  "PHSC");
-           form.put("authSubject",  "SOSC");
+           form.put("previousResultCount",  "0");           
+           form.put("authSubject",  "LFSC,HLSC,PHSC,SOSC");
            form.put("exactAuthorSearch",  "true");
            form.put("showFullList",  "false");
            form.put("authorPreferredName",  "");
            form.put("origin",  "searchauthorfreelookup");
            form.put("affiliationId",  "");
            form.put("txGid",  "9C81832D8E9BE10BF148E14B14D67774.wsnAw8kcdt7IPYLO0V48gA:22");
-           /*
-           form.put("origin",  "searchauthorfreelookup");
-           form.put("freeSearch",  "true");
-           form.put("src",  "");
-           form.put("edit",  "");
-           form.put("poppUp",  "");
-           form.put("exactSearch",  "on");
-           form.put("searchterm1",  "vento");
-           form.put("searchterm2",  "mario");
-           form.put("institute",  "");
-           form.put("submitButtonName",  "Search");
-           form.put("orcidId",  "");
-           form.put("authSubject",  "LFSC");
-           form.put("_authSubject",  "on");
-           form.put("authSubject",  "HLSC");
-           form.put("_authSubject",  "on");
-           form.put("authSubject",  "PHSC");
-           form.put("_authSubject",  "on");
-           form.put("authSubject",  "SOSC");
-           form.put("_authSubject",  "on");
-           */
-           
-           
            
            String body=encodeForm(form);                                     
-           
-           //HttpURLConnection  conn=(HttpURLConnection)new URL(url+body).openConnection();
-           HttpURLConnection  conn=(HttpURLConnection)url.openConnection();
+                      
+           URL urls=new  URL(baseUrl);
+           HttpURLConnection  conn=(HttpURLConnection)urls.openConnection();
            System.out.println(conn);
            conn.setRequestMethod("POST");
            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
@@ -109,7 +92,7 @@ public class Scopus  {
            PrintWriter  pw=new  PrintWriter(
                          new  OutputStreamWriter(
                                        conn.getOutputStream(),  "UTF-8"));
-          // pw.print(body);
+           pw.print(body);
            pw.close();
            
            int  status=conn.getResponseCode();
@@ -125,19 +108,19 @@ public class Scopus  {
            }
            Document doc = Jsoup.parse(result, "https://www.scopus.com");
            Elements elementi = doc.body().getElementsByAttributeValue("title","View author details with grouped authors");
-           String nomi="";
+           JSONArray ja = new JSONArray();           
+           
            for (Element elemento: elementi){
-        	   nomi+="Nome "+elemento.outerHtml();
-           	   nomi+="URL ID "+elemento.attr("href");
+        	   JSONObject mainObj = new JSONObject();
+        	   mainObj.put("nome", elemento.text());
            	   Document doc2 = Jsoup.connect(elemento.attr("href")).get();
            	   Element hindex=doc2.body().getElementsByClass("addInfoRow row3").get(0);
-           	   //for (Element elementos: hindex){
-           		nomi+="h-index "+hindex.getElementsByClass("valueColumn");           	  
-           	   //}
-           	              	  
+           	   mainObj.put("h-index",hindex.getElementsByClass("valueColumn").text());
+           	   mainObj.put("area",doc2.getElementById("subjAreas").child(0).text());      
+           	   ja.put(mainObj);
            }
            
            System.out.println(result);
-           return Jsoup.parse(nomi).text();           
+           return ja.toString();           
     }
 }
