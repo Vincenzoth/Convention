@@ -27,7 +27,7 @@ public class Hello {
 	@Produces(MediaType.TEXT_HTML)
 	public String sayHtmlHello() {		
 		try {			
-			Scopus scopus = new Scopus("angelo","santoro");
+			Scopus scopus = new Scopus("mario","vento");
 			return scopus.webScraping();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
