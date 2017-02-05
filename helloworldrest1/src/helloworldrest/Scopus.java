@@ -22,6 +22,7 @@ public class Scopus  {
        public static  String encodeForm(Map<String,String> data)  {
               StringBuffer  sb=new  StringBuffer();
               try  {
+            	  	 sb.append('?');
                      for(String  key : data.keySet())  {
                             sb.append(URLEncoder.encode(key,  "UTF-8"));
                             sb.append('=');
@@ -33,12 +34,14 @@ public class Scopus  {
               }
               return sb.toString();
        }
+       
        public String webScraping()  throws  Exception  {
-           //URL  url=new  URL("https://www.scopus.com/results/authorNamesList.uri?sort=count-f&src=al&sid=9C81832D8E9BE10BF148E14B14D67774.wsnAw8kcdt7IPYLO0V48gA%3a220&sot=al&sdt=al&sl=54&s=AUTH--LAST--NAME%28EQUALS%28vento%29%29+AND+AUTH--FIRST%28mario%29&st1=vento&st2=mario&orcidId=&selectionPageSearch=anl&reselectAuthor=false&activeFlag=false&showDocument=false&resultsPerPage=20&offset=1&jtp=false&currentPage=1&previousSelectionCount=0&tooManySelections=false&previousResultCount=0&authSubject=LFSC&authSubject=HLSC&authSubject=PHSC&authSubject=SOSC&exactAuthorSearch=true&showFullList=false&authorPreferredName=&origin=searchauthorfreelookup&affiliationId=&txGid=9C81832D8E9BE10BF148E14B14D67774.wsnAw8kcdt7IPYLO0V48gA%3a22");
-           URL  url=new  URL("https://www.scopus.com/results/authorNamesList.uri");
-          
+           //URL  url=new  URL("https://www.scopus.com/results/authorNamesList.uri?sort=count-f&src=al&sid=12ABEFC7BA5E633A2CA3A12D8253D8A4.wsnAw8kcdt7IPYLO0V48gA%3a110&sot=al&sdt=al&sl=54&s=AUTH--LAST--NAME%28EQUALS%28vento%29%29+AND+AUTH--FIRST%28mario%29&st1=vento&st2=mario&orcidId=&selectionPageSearch=anl&reselectAuthor=false&activeFlag=false&showDocument=false&resultsPerPage=20&offset=1&jtp=false&currentPage=1&previousSelectionCount=0&tooManySelections=false&previousResultCount=0&authSubject=LFSC&authSubject=HLSC&authSubject=PHSC&authSubject=SOSC&exactAuthorSearch=true&showFullList=false&authorPreferredName=&origin=searchauthorfreelookup&affiliationId=&txGid=12ABEFC7BA5E633A2CA3A12D8253D8A4.wsnAw8kcdt7IPYLO0V48gA%3a11&");
+    	   URL  url=new  URL("https://www.scopus.com/results/authorNamesList.uri?sort=count-f&src=al&sid=12ABEFC7BA5E633A2CA3A12D8253D8A4.wsnAw8kcdt7IPYLO0V48gA%3a110&sot=al&sdt=al&sl=54&s=AUTH--LAST--NAME%28EQUALS%28"+surname+"%29%29+AND+AUTH--FIRST%28"+name+"%29&st1="+surname+"&st2="+name+"&orcidId=&selectionPageSearch=anl&reselectAuthor=false&activeFlag=false&showDocument=false&resultsPerPage=20&offset=1&jtp=false&currentPage=1&previousSelectionCount=0&tooManySelections=false&previousResultCount=0&authSubject=LFSC&authSubject=HLSC&authSubject=PHSC&authSubject=SOSC&exactAuthorSearch=true&showFullList=false&authorPreferredName=&origin=searchauthorfreelookup&affiliationId=&txGid=12ABEFC7BA5E633A2CA3A12D8253D8A4.wsnAw8kcdt7IPYLO0V48gA%3a11&");
+           //URL  url=new  URL("https://www.scopus.com/search/submit/authorFreeLookup.uri");
+    	   //String  url="https://www.scopus.com/results/authorNamesList.uri";
            Map<String,String>  form=new  HashMap<String,String>();
-           /*
+          
            form.put("sort",  "count-f");
            form.put("src",  "al");
            form.put("sid",  "9C81832D8E9BE10BF148E14B14D67774.wsnAw8kcdt7IPYLO0V48gA:220");
@@ -70,7 +73,7 @@ public class Scopus  {
            form.put("origin",  "searchauthorfreelookup");
            form.put("affiliationId",  "");
            form.put("txGid",  "9C81832D8E9BE10BF148E14B14D67774.wsnAw8kcdt7IPYLO0V48gA:22");
-           */
+           /*
            form.put("origin",  "searchauthorfreelookup");
            form.put("freeSearch",  "true");
            form.put("src",  "");
@@ -90,18 +93,25 @@ public class Scopus  {
            form.put("_authSubject",  "on");
            form.put("authSubject",  "SOSC");
            form.put("_authSubject",  "on");
+           */
            
-           String  body=encodeForm(form);
+           
+           
+           String body=encodeForm(form);                                     
+           
+           //HttpURLConnection  conn=(HttpURLConnection)new URL(url+body).openConnection();
            HttpURLConnection  conn=(HttpURLConnection)url.openConnection();
+           System.out.println(conn);
            conn.setRequestMethod("POST");
-           conn.setRequestProperty("Content-Type",
-                         "application/x-www-form-urlencoded; charset=UTF-8");
+           conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
            conn.setDoOutput(true);
+           
            PrintWriter  pw=new  PrintWriter(
                          new  OutputStreamWriter(
                                        conn.getOutputStream(),  "UTF-8"));
-           pw.print(body);
+          // pw.print(body);
            pw.close();
+           
            int  status=conn.getResponseCode();
            System.out.println("RESPONSE  CODE:  "+status);
            System.out.println("CONTENT  TYPE:   "+conn.getContentType());
