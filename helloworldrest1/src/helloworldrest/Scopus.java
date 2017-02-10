@@ -121,6 +121,9 @@ public class Scopus  {
            }
            
            System.out.println(result);
-           return ja.toString();           
+           JSONObject jo = new JSONObject();
+           jo.put("scopus", ja);
+		   System.out.println(jo.toString());
+           return jo.toString();           
     }
 }
