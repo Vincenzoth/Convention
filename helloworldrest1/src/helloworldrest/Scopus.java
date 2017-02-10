@@ -118,6 +118,7 @@ public class Scopus  {
            	   mainObj.put("h-index",hindex.getElementsByClass("valueColumn").text());
            	   mainObj.put("area",doc2.getElementById("subjAreas").child(0).text());      
            	   ja.put(mainObj);
+           	   
            }
            
            System.out.println(result);

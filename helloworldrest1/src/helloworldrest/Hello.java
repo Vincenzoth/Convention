@@ -26,6 +26,7 @@ public class Hello {
 	@GET
 	@Produces(MediaType.TEXT_HTML)
 	public String sayHtmlHello() {		
+		
 		try {			
 			Scopus scopus = new Scopus("angelo","santoro");
 			return scopus.webScraping();

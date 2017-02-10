@@ -111,7 +111,8 @@ public class AdminGui {
 		        JSONArray jArr = (JSONArray) ja.getJSONArray("scopus");
 		        for(int i = 0; i < jArr.length();i++) {
 		            JSONObject innerObj = jArr.getJSONObject(i);
-		            model.addRow(new Object[]{innerObj.getString("nome"),innerObj.getString("nome"),innerObj.getString("area"),innerObj.getString("h-index")});    
+		            model.addRow(new Object[]{innerObj.getString("nome"),innerObj.getString("nome"),innerObj.getString("area"),innerObj.getString("h-index")});
+		            
 		        }
 				
 			} catch (Exception e) {
