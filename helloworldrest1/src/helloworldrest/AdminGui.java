@@ -8,9 +8,17 @@ import java.rmi.RemoteException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
 
 import javax.swing.JFrame;
@@ -63,7 +71,12 @@ public class AdminGui {
 	private JTextField textFieldLuogo;
 	private JRadioButton rdbtnOrganizzatore;
 	private JRadioButton rdbtnPartecipante;
-
+	private JEditorPane editorPaneDescrizione;
+	private DatePicker datePicker;
+	private TimePicker timePicker;
+	private JEditorPane editorPaneProgramma;
+	private Choice choiceConvegno;
+	
 	/**
 	 * Launch the application.
 	 */
@@ -120,7 +133,7 @@ public class AdminGui {
 		JLabel lblDescrizione = new JLabel("Descrizione:");
 		panelConvegno.add(lblDescrizione, "cell 0 2,growx,aligny top");
 		
-		JEditorPane editorPaneDescrizione = new JEditorPane();
+		editorPaneDescrizione = new JEditorPane();
 		panelConvegno.add(editorPaneDescrizione, "cell 1 2,grow");
 		
 		JLabel lblLuogo = new JLabel("Luogo:");
@@ -131,6 +144,7 @@ public class AdminGui {
 		textFieldLuogo.setColumns(10);
 		
 		JButton btnInviaConvegno = new JButton("Invia");
+		btnInviaConvegno.addActionListener(new SendButtonListenerConvegno());
 		panelConvegno.add(btnInviaConvegno, "cell 1 4,alignx right");
 		
 		JPanel panelProgramma = new JPanel();
@@ -140,13 +154,24 @@ public class AdminGui {
 		JLabel lblConvegnoProgramma = new JLabel("Convegno:");
 		panelProgramma.add(lblConvegnoProgramma, "cell 0 0,alignx left,aligny top");
 		
-		Choice choiceConvegno = new Choice();
+		choiceConvegno = new Choice();
+		String sql = "SELECT id, nome FROM convegni";
+		try {
+			Map<String,String> result=databaseSelect(sql);
+			for(String  key : result.keySet())
+	         {	             
+	             choiceConvegno.add(result.get(key));	             
+	         }	         
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		panelProgramma.add(choiceConvegno, "cell 1 0,growx");
 		
 		JLabel lblData = new JLabel("Data:");
 		panelProgramma.add(lblData, "cell 0 1,alignx left,aligny top");
 		
-		DatePicker datePicker = new DatePicker();
+		datePicker = new DatePicker();
 		panelProgramma.add(datePicker, "cell 1 1,grow");
 		
 		JSpinField spinHours = new JSpinField();
@@ -156,16 +181,17 @@ public class AdminGui {
 		JLabel lblOra = new JLabel("Ora:");
 		panelProgramma.add(lblOra, "cell 0 2");
 		
-		TimePicker timePicker = new TimePicker();		
+		timePicker = new TimePicker();		
 		panelProgramma.add(timePicker, "cell 1 2,grow");
 		
 		JLabel lblProgramma = new JLabel("Programma:");
 		panelProgramma.add(lblProgramma, "cell 0 3,alignx left,aligny top");
 		
-		JEditorPane editorPaneProgramma = new JEditorPane();
+		editorPaneProgramma = new JEditorPane();
 		panelProgramma.add(editorPaneProgramma, "cell 1 3,grow");
 		
 		JButton btnInviaProgramma = new JButton("Invia");
+		btnInviaProgramma.addActionListener(new SendButtonListenerProgramma());
 		panelProgramma.add(btnInviaProgramma, "cell 1 7,alignx right,aligny top");
 		
 		JSpinField spinMinutes = new JSpinField();
@@ -229,11 +255,11 @@ public class AdminGui {
 		panelPartecipanti.add(scrollpane, "cell 0 7 8 1,grow");		
 		
 		JButton btnInviaPartecipante = new JButton("Invia");
-		btnInviaPartecipante.addActionListener(new SendButtonListener());				
+		btnInviaPartecipante.addActionListener(new SendButtonListenerPartecipanti());				
 		panelPartecipanti.add(btnInviaPartecipante, "cell 7 9,alignx right");
 	}
 	
-	private class SendButtonListener implements ActionListener {
+	private class SendButtonListenerPartecipanti implements ActionListener {
 
 		@Override
 		public void actionPerformed(ActionEvent arg0) {
@@ -249,8 +275,13 @@ public class AdminGui {
 			        JTable table = (JTable)e.getSource();
 			        int modelRow = Integer.valueOf( e.getActionCommand() );
 			        System.out.println();
-			        try {
-						database(table.getModel().getValueAt(modelRow, 0).toString());
+			        try {	
+			        	int organizzatore=0;
+			            if(rdbtnOrganizzatore.isSelected())
+			         	   organizzatore=1;
+						String sql = "INSERT INTO partecipanti (id_convegno, id_partecipante,tipologia) VALUES" + 
+		        	   			"('3666', '"+table.getModel().getValueAt(modelRow, 0).toString()+"','"+organizzatore+"')";
+						databaseInsert(sql);
 					} catch (IOException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
@@ -278,7 +309,51 @@ public class AdminGui {
 		
 	}
 	
-	private String database(String idPartecipante) throws IOException {
+	private class SendButtonListenerConvegno implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent arg0) {
+			String name = textFieldNome.getText();
+			String descrizione = editorPaneDescrizione.getText();
+			String luogo = textFieldLuogo.getText();
+			
+			String sql = "INSERT INTO convegni (nome, logo, descrizione, luogo) VALUES" + 
+    	   				 "('"+name+"', '0','"+descrizione+"','"+luogo+"')";
+			
+			try {
+				databaseInsert(sql);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+	}
+	
+	private class SendButtonListenerProgramma implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent arg0) {
+			String idConvegno = choiceConvegno.getSelectedItem();
+			String name = textFieldNomePartecipante.getText();			
+			LocalDate localDate = datePicker.getDate();
+			LocalTime localTime = timePicker.getTime();					
+			String programma = editorPaneProgramma.getText();
+			
+			String sql = "INSERT INTO programma (idConvegno, data, ora, programma) VALUES" + 
+	   				 	 "('"+idConvegno+"', '"+localDate+"','"+localTime+"','"+programma+"')";
+			try {
+				databaseInsert(sql);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+						
+		}
+		
+	}
+	
+	private void databaseInsert(String sql) throws IOException {
 		  /**
         * 3306 is the default port for MySQL in XAMPP. Note both the 
         * MySQL server and Apache must be running. 
@@ -296,9 +371,7 @@ public class AdminGui {
         * set (as is the default for the root user in XAMPP's MySQL),
         * an empty string can be used.
         */
-       String password = "";
-       
-       String music = "";
+       String password = "";              
        
        try
        {
@@ -333,13 +406,8 @@ public class AdminGui {
            /**
             * Query people entries with the lname 'Bloggs'
             */
-           //Random r = new Random();
-           int organizzatore=0;
-           if(rdbtnOrganizzatore.isSelected())
-        	   organizzatore=1;
-           
-           String sql = "INSERT INTO partecipanti (id_convegno, id_partecipanti,tipologia) VALUES" + 
-        	   			"('3666', '"+idPartecipante+"','"+organizzatore+"')";
+           //Random r = new Random();           
+                      
            //String sql = "SELECT * FROM partecipanti";            
            System.out.println(sql);
            //ResultSet res = stt.executeQuery(sql);
@@ -367,8 +435,89 @@ public class AdminGui {
        {
            e.printStackTrace();
        }
-       
-       return music;
+              
+	}
+
+	private Map<String,String> databaseSelect(String sql) throws IOException {
+		  /**
+	  * 3306 is the default port for MySQL in XAMPP. Note both the 
+	  * MySQL server and Apache must be running. 
+	  */
+				
+	 String url = "jdbc:mysql://localhost:3306/";
+	
+	 /**
+	  * The MySQL user.
+	  */
+	 String user = "root";
+	
+	 /**
+	  * Password for the above MySQL user. If no password has been 
+	  * set (as is the default for the root user in XAMPP's MySQL),
+	  * an empty string can be used.
+	  */
+	 String password = "";
+	
+	 Map<String,String> result = new HashMap<String,String>();
+	
+	 try
+	 {
+	     Class.forName("com.mysql.jdbc.Driver").newInstance();
+	     Connection con = DriverManager.getConnection(url, user, password);
+	     
+	     Statement stt = con.createStatement();
+	     
+	     /**
+	      * Create and select a database for use. 
+	      */
+	    // stt.execute("CREATE DATABASE IF NOT EXISTS hellosmile");
+	     stt.execute("USE test");
+	     
+	     /**
+	      * Create an example table
+	      */
+	     //stt.execute("DROP TABLE IF EXISTS music");
+	    // stt.execute("CREATE TABLE music (" +
+	    //         "id BIGINT NOT NULL AUTO_INCREMENT,"
+	    //         + "emotion VARCHAR(25),"
+	     //        + "url VARCHAR(25),"
+	     //        + "PRIMARY KEY(id)"
+	     //        + ")");
+	     
+	     /**
+	      * Add entries to the example table
+	      */
+	     //stt.execute("INSERT INTO music (emotion, url) VALUES" + 
+	          //   "('sadness', 'Bloggs'), ('happy', 'Bloggs'), ('anger', 'Hill')");
+	     
+	     /**
+	      * Query people entries with the lname 'Bloggs'
+	      */
+	     //Random r = new Random();        
+	     //String sql = "SELECT * FROM partecipanti";            
+	     System.out.println(sql);
+	     ResultSet res = stt.executeQuery(sql);	     
+	     	     
+	     while (res.next())
+	     {	             	    	 
+	    	 result.put(res.getString("id"),res.getString("nome"));
+	     }	
+	     
+	     /**
+	      * Free all opened resources
+	      */
+	     res.close();
+	     stt.close();            
+	     con.close();            
+	     
+	 }
+	 catch (Exception e)
+	 {
+	     e.printStackTrace();
+	 }
+	    
+	 	return result;
+	
 	}
 	
 	
