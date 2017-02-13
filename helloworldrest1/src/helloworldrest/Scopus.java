@@ -1,6 +1,10 @@
 package helloworldrest;
 
-import java.net.*; 
+import java.net.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.io.*; 
 import java.util.*;
 
@@ -80,6 +84,7 @@ public class Scopus  {
            form.put("affiliationId",  "");
            form.put("txGid",  "9C81832D8E9BE10BF148E14B14D67774.wsnAw8kcdt7IPYLO0V48gA:22");
            
+           /*
            String body=encodeForm(form);                                     
                       
            URL urls=new  URL(baseUrl);
@@ -99,6 +104,8 @@ public class Scopus  {
            System.out.println("RESPONSE  CODE:  "+status);
            System.out.println("CONTENT  TYPE:   "+conn.getContentType());
            String result = "";
+           
+           
            if (status>=200 &&   status<=299)  {
                   InputStreamReader  in=new  InputStreamReader(conn.getInputStream(), "UTF-8");
                   int c;
@@ -106,14 +113,19 @@ public class Scopus  {
                          result+=(char)c;
                   in.close();
            }
-           Document doc = Jsoup.parse(result, "https://www.scopus.com");
+           */
+           
+           Document doc = Jsoup.connect(baseUrl).data(form).post();
+           //Document doc = Jsoup.parse(result, "https://www.scopus.com");
            Elements elementi = doc.body().getElementsByAttributeValue("title","View author details with grouped authors");
+           //Elements element = doc.body().getElementsByClass("dataCol1");
            JSONArray ja = new JSONArray();           
            
            for (Element elemento: elementi){
         	   JSONObject mainObj = new JSONObject();
         	   mainObj.put("nome", elemento.text());
-           	   Document doc2 = Jsoup.connect(elemento.attr("href")).get();
+           	   Document doc2 = Jsoup.connect(elemento.attr("href")).get();           	   
+           	   mainObj.put("id",doc2.getElementsByClass("authId").text().split(" ")[2]);
            	   Element hindex=doc2.body().getElementsByClass("addInfoRow row3").get(0);
            	   mainObj.put("h-index",hindex.getElementsByClass("valueColumn").text());
            	   mainObj.put("area",doc2.getElementById("subjAreas").child(0).text());      
@@ -121,10 +133,11 @@ public class Scopus  {
            	   
            }
            
-           System.out.println(result);
+           //System.out.println(result);
            JSONObject jo = new JSONObject();
            jo.put("scopus", ja);
 		   System.out.println(jo.toString());
            return jo.toString();           
     }
+              
 }
