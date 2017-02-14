@@ -80,7 +80,13 @@ public class AdminGui {
 	private DatePicker datePicker;
 	private TimePicker timePicker;
 	private JEditorPane editorPaneProgramma;	
-	private JComboBox<Map<String,String>> comboBoxConvegno;
+	private JComboBox comboBoxConvegni;
+	private JComboBox comboBoxPartecipanti;
+	private Vector modelComboBox;
+	
+	private JPanel panelConvegno;
+	private JPanel panelProgramma;
+	private JPanel panelPartecipanti;
 	
 	/**
 	 * Launch the application.
@@ -116,7 +122,7 @@ public class AdminGui {
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		frame.getContentPane().add(tabbedPane, BorderLayout.CENTER);
 		
-		JPanel panelConvegno = new JPanel();
+		panelConvegno = new JPanel();
 		tabbedPane.addTab("Convegno", null, panelConvegno, null);
 		panelConvegno.setLayout(new MigLayout("", "[][grow]", "[][][grow][][]"));
 		
@@ -152,39 +158,18 @@ public class AdminGui {
 		btnInviaConvegno.addActionListener(new SendButtonListenerConvegno());
 		panelConvegno.add(btnInviaConvegno, "cell 1 4,alignx right");
 		
-		JPanel panelProgramma = new JPanel();
+		panelProgramma = new JPanel();
 		tabbedPane.addTab("Programma", null, panelProgramma, null);
 		panelProgramma.setLayout(new MigLayout("", "[72px][433px,grow]", "[16px][][16px,grow][][grow][191px][grow][grow][16px][25px]"));
 		
 		JLabel lblConvegnoProgramma = new JLabel("Convegno:");
 		panelProgramma.add(lblConvegnoProgramma, "cell 0 0,alignx left,aligny top");
+
+		modelUpdate();
+		comboBoxConvegni = new JComboBox(modelComboBox);			
+		comboBoxConvegni.setRenderer( new ItemRenderer() );
 		
-		//choiceConvegno = new Choice();
-		
-				
-		//comboBoxConvegno.setEditable(true);
-		
-		String sql = "SELECT id, nome FROM convegni";
-		try {
-			Map<String,String> result=databaseSelect(sql);
-			
-			Vector modelComboBox = new Vector();
-	        
-			for(String  key : result.keySet()){
-				modelComboBox.addElement( new Item(key, result.get(key) ) );				
-			}			
-			comboBoxConvegno = new JComboBox<>(modelComboBox);			
-			comboBoxConvegno.setRenderer( new ItemRenderer() );
-			
-			panelProgramma.add(comboBoxConvegno, "cell 1 0,growx");
-	       	         
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		//panelProgramma.add(choiceConvegno, "cell 1 0,growx");
-		
-		
+		panelProgramma.add(comboBoxConvegni, "cell 1 0,growx");		
 		
 		JLabel lblData = new JLabel("Data:");
 		panelProgramma.add(lblData, "cell 0 2,alignx left,aligny top");
@@ -216,7 +201,7 @@ public class AdminGui {
 		spinMinutes.setMaximum(60);		
 		spinMinutes.setMinimum(0);
 		
-		JPanel panelPartecipanti = new JPanel();
+		panelPartecipanti = new JPanel();
 		tabbedPane.addTab("Partecipanti", null, panelPartecipanti, null);
 		panelPartecipanti.setLayout(new MigLayout("", "[][grow][][grow][][][][]", "[][][grow][][][][grow][][grow][]"));
 		
@@ -245,8 +230,10 @@ public class AdminGui {
 		choiceConvegnoPartecipanti.add("C++");
 		choiceConvegnoPartecipanti.add("VB");
 		choiceConvegnoPartecipanti.add("Perl");
-		
-		panelPartecipanti.add(choiceConvegnoPartecipanti, "cell 1 2 7 1,grow");
+				
+		comboBoxPartecipanti = new JComboBox(modelComboBox);			
+		comboBoxPartecipanti.setRenderer( new ItemRenderer() );
+		panelPartecipanti.add(comboBoxPartecipanti, "cell 1 2 7 1,grow");
 		
 		JSeparator separator = new JSeparator();
 		panelPartecipanti.add(separator, "cell 0 3 8 1");
@@ -339,7 +326,19 @@ public class AdminGui {
     	   				 "('"+name+"', '0','"+descrizione+"','"+luogo+"')";
 			
 			try {
-				databaseInsert(sql);
+				databaseInsert(sql);							
+				modelUpdate();
+				
+				panelProgramma.remove(comboBoxConvegni);
+				panelProgramma.revalidate(); 				
+				panelPartecipanti.remove(comboBoxPartecipanti);
+				panelPartecipanti.revalidate();
+				frame.repaint();
+				comboBoxConvegni = new JComboBox(modelComboBox);
+				comboBoxPartecipanti = new JComboBox(modelComboBox);
+				
+				panelPartecipanti.add(comboBoxPartecipanti, "cell 1 2 7 1,grow");
+				panelProgramma.add(comboBoxConvegni, "cell 1 0,growx");
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -352,7 +351,7 @@ public class AdminGui {
 
 		@Override
 		public void actionPerformed(ActionEvent arg0) {
-			Item item = (Item)comboBoxConvegno.getSelectedItem();	        
+			Item item = (Item)comboBoxConvegni.getSelectedItem();	        
 			String idConvegno = item.getId();					
 			LocalDate localDate = datePicker.getDate();
 			LocalTime localTime = timePicker.getTime();					
@@ -370,6 +369,20 @@ public class AdminGui {
 						
 		}
 		
+	}
+	
+	private void modelUpdate(){
+		String sql = "SELECT id, nome FROM convegni";
+		try {
+			Map<String,String> result=databaseSelect(sql);			
+			modelComboBox = new Vector();	        
+			for(String  key : result.keySet()){
+				modelComboBox.addElement( new Item(key, result.get(key) ) );				
+			}						         
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	private void databaseInsert(String sql) throws IOException {
