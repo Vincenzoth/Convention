@@ -19,7 +19,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
+import java.util.Vector;
 
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
@@ -31,6 +33,7 @@ import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.JList;
 import javax.swing.AbstractAction;
@@ -38,22 +41,24 @@ import javax.swing.Action;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JTable;
 import org.json.*;
 import javax.swing.JSeparator;
-import javax.swing.JSpinner;
 
 import java.awt.Choice;
+import java.awt.Component;
 import java.awt.Label;
 import javax.swing.JEditorPane;
 import java.awt.Panel;
 import javax.swing.JRadioButton;
-import javax.swing.JComboBox;
+
 import com.toedter.calendar.JDateChooser;
 import com.toedter.calendar.JDayChooser;
 import com.toedter.calendar.JCalendar;
 import org.jdesktop.swingx.JXDatePicker;
 import com.toedter.components.JSpinField;
+
 import com.github.lgooddatepicker.components.TimePicker;
 import com.github.lgooddatepicker.components.DateTimePicker;
 import com.github.lgooddatepicker.components.DatePicker;
@@ -74,8 +79,8 @@ public class AdminGui {
 	private JEditorPane editorPaneDescrizione;
 	private DatePicker datePicker;
 	private TimePicker timePicker;
-	private JEditorPane editorPaneProgramma;
-	private Choice choiceConvegno;
+	private JEditorPane editorPaneProgramma;	
+	private JComboBox<Map<String,String>> comboBoxConvegno;
 	
 	/**
 	 * Launch the application.
@@ -149,50 +154,63 @@ public class AdminGui {
 		
 		JPanel panelProgramma = new JPanel();
 		tabbedPane.addTab("Programma", null, panelProgramma, null);
-		panelProgramma.setLayout(new MigLayout("", "[72px][433px,grow]", "[16px][16px,grow][grow][191px][grow][grow][16px][25px]"));
+		panelProgramma.setLayout(new MigLayout("", "[72px][433px,grow]", "[16px][][16px,grow][][grow][191px][grow][grow][16px][25px]"));
 		
 		JLabel lblConvegnoProgramma = new JLabel("Convegno:");
 		panelProgramma.add(lblConvegnoProgramma, "cell 0 0,alignx left,aligny top");
 		
-		choiceConvegno = new Choice();
+		//choiceConvegno = new Choice();
+		
+				
+		//comboBoxConvegno.setEditable(true);
+		
 		String sql = "SELECT id, nome FROM convegni";
 		try {
 			Map<String,String> result=databaseSelect(sql);
-			for(String  key : result.keySet())
-	         {	             
-	             choiceConvegno.add(result.get(key));	             
-	         }	         
+			
+			Vector modelComboBox = new Vector();
+	        
+			for(String  key : result.keySet()){
+				modelComboBox.addElement( new Item(key, result.get(key) ) );				
+			}			
+			comboBoxConvegno = new JComboBox<>(modelComboBox);			
+			comboBoxConvegno.setRenderer( new ItemRenderer() );
+			
+			panelProgramma.add(comboBoxConvegno, "cell 1 0,growx");
+	       	         
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		panelProgramma.add(choiceConvegno, "cell 1 0,growx");
+		//panelProgramma.add(choiceConvegno, "cell 1 0,growx");
+		
+		
 		
 		JLabel lblData = new JLabel("Data:");
-		panelProgramma.add(lblData, "cell 0 1,alignx left,aligny top");
+		panelProgramma.add(lblData, "cell 0 2,alignx left,aligny top");
 		
 		datePicker = new DatePicker();
-		panelProgramma.add(datePicker, "cell 1 1,grow");
+		panelProgramma.add(datePicker, "cell 1 2,grow");
 		
 		JSpinField spinHours = new JSpinField();
 		spinHours.setMaximum(24);
 		spinHours.setMinimum(0);		
 		
 		JLabel lblOra = new JLabel("Ora:");
-		panelProgramma.add(lblOra, "cell 0 2");
+		panelProgramma.add(lblOra, "cell 0 4");
 		
 		timePicker = new TimePicker();		
-		panelProgramma.add(timePicker, "cell 1 2,grow");
+		panelProgramma.add(timePicker, "cell 1 4,grow");
 		
 		JLabel lblProgramma = new JLabel("Programma:");
-		panelProgramma.add(lblProgramma, "cell 0 3,alignx left,aligny top");
+		panelProgramma.add(lblProgramma, "cell 0 5,alignx left,aligny top");
 		
 		editorPaneProgramma = new JEditorPane();
-		panelProgramma.add(editorPaneProgramma, "cell 1 3,grow");
+		panelProgramma.add(editorPaneProgramma, "cell 1 5,grow");
 		
 		JButton btnInviaProgramma = new JButton("Invia");
 		btnInviaProgramma.addActionListener(new SendButtonListenerProgramma());
-		panelProgramma.add(btnInviaProgramma, "cell 1 7,alignx right,aligny top");
+		panelProgramma.add(btnInviaProgramma, "cell 1 9,alignx right,aligny top");
 		
 		JSpinField spinMinutes = new JSpinField();
 		spinMinutes.setMaximum(60);		
@@ -334,14 +352,15 @@ public class AdminGui {
 
 		@Override
 		public void actionPerformed(ActionEvent arg0) {
-			String idConvegno = choiceConvegno.getSelectedItem();
-			String name = textFieldNomePartecipante.getText();			
+			Item item = (Item)comboBoxConvegno.getSelectedItem();	        
+			String idConvegno = item.getId();					
 			LocalDate localDate = datePicker.getDate();
 			LocalTime localTime = timePicker.getTime();					
 			String programma = editorPaneProgramma.getText();
 			
 			String sql = "INSERT INTO programma (idConvegno, data, ora, programma) VALUES" + 
 	   				 	 "('"+idConvegno+"', '"+localDate+"','"+localTime+"','"+programma+"')";
+			//System.out.println(sql);
 			try {
 				databaseInsert(sql);
 			} catch (IOException e) {
@@ -519,6 +538,60 @@ public class AdminGui {
 	 	return result;
 	
 	}
+	
+	class ItemRenderer extends BasicComboBoxRenderer
+    {
+        public Component getListCellRendererComponent(
+            JList list, Object value, int index,
+            boolean isSelected, boolean cellHasFocus)
+        {
+            super.getListCellRendererComponent(list, value, index,
+                isSelected, cellHasFocus);
+
+            if (value != null)
+            {
+                Item item = (Item)value;
+                setText( item.getTitle().toUpperCase() );
+            }
+
+            /*
+            if (index == -1)
+            {
+                Item item = (Item)value;
+                setText( "" + item.getId() );
+            }
+             */
+
+            return this;
+        }
+    }
+	
+	class Item
+    {
+        private String id;
+        private String title;
+
+        public Item(String id, String title)
+        {
+            this.id = id;
+            this.title = title;
+        }
+
+        public String getId()
+        {
+            return id;
+        }
+
+        public String getTitle()
+        {
+            return title;
+        }
+
+        public String toString()
+        {
+            return title;
+        }
+    }
 	
 	
 
