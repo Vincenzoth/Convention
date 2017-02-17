@@ -1,9 +1,17 @@
-package helloworldrest;
+package client;
 
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.file.Files;
 import java.rmi.RemoteException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -59,10 +67,16 @@ import com.toedter.calendar.JCalendar;
 import org.jdesktop.swingx.JXDatePicker;
 import com.toedter.components.JSpinField;
 
+import helloworldrest.ButtonColumn;
+import helloworldrest.Database;
+import helloworldrest.Scopus;
+
 import com.github.lgooddatepicker.components.TimePicker;
 import com.github.lgooddatepicker.components.DateTimePicker;
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.CalendarPanel;
+import javax.swing.JFileChooser;
+import java.awt.Button;
 
 public class AdminGui {
 
@@ -86,7 +100,8 @@ public class AdminGui {
 	
 	private JPanel panelConvegno;
 	private JPanel panelProgramma;
-	private JPanel panelPartecipanti;
+	private JPanel panelPartecipanti;	
+	private JButton btnFileChooser;
 	
 	/**
 	 * Launch the application.
@@ -124,7 +139,7 @@ public class AdminGui {
 		
 		panelConvegno = new JPanel();
 		tabbedPane.addTab("Convegno", null, panelConvegno, null);
-		panelConvegno.setLayout(new MigLayout("", "[][grow]", "[][][grow][][]"));
+		panelConvegno.setLayout(new MigLayout("", "[][grow]", "[][][][grow][][]"));
 		
 		Label labelNome = new Label("Nome:");
 		panelConvegno.add(labelNome, "cell 0 0,growx");
@@ -136,27 +151,30 @@ public class AdminGui {
 		JLabel lblLogo = new JLabel("Logo:");
 		panelConvegno.add(lblLogo, "cell 0 1,growx");
 		
-		textFieldLogo = new JTextField();
-		textFieldLogo.setEnabled(false);
-		panelConvegno.add(textFieldLogo, "cell 1 1,growx");
-		textFieldLogo.setColumns(10);
+		textFieldLogo = new JTextField();		
+		panelConvegno.add(textFieldLogo, "flowx,cell 1 1,growx");
+		textFieldLogo.setColumns(10);				
 		
 		JLabel lblDescrizione = new JLabel("Descrizione:");
-		panelConvegno.add(lblDescrizione, "cell 0 2,growx,aligny top");
+		panelConvegno.add(lblDescrizione, "cell 0 3,growx,aligny top");
 		
 		editorPaneDescrizione = new JEditorPane();
-		panelConvegno.add(editorPaneDescrizione, "cell 1 2,grow");
+		panelConvegno.add(editorPaneDescrizione, "cell 1 3,grow");
 		
 		JLabel lblLuogo = new JLabel("Luogo:");
-		panelConvegno.add(lblLuogo, "cell 0 3,grow");
+		panelConvegno.add(lblLuogo, "cell 0 4,grow");
 		
 		textFieldLuogo = new JTextField();
-		panelConvegno.add(textFieldLuogo, "cell 1 3,growx");
+		panelConvegno.add(textFieldLuogo, "cell 1 4,growx");
 		textFieldLuogo.setColumns(10);
 		
 		JButton btnInviaConvegno = new JButton("Invia");
 		btnInviaConvegno.addActionListener(new SendButtonListenerConvegno());
-		panelConvegno.add(btnInviaConvegno, "cell 1 4,alignx right");
+		panelConvegno.add(btnInviaConvegno, "cell 1 5,alignx right");
+		
+		btnFileChooser = new JButton("...");
+		btnFileChooser.addActionListener(new FileChooserFrame());
+		panelConvegno.add(btnFileChooser, "cell 1 1");
 		
 		panelProgramma = new JPanel();
 		tabbedPane.addTab("Programma", null, panelProgramma, null);
@@ -322,13 +340,44 @@ public class AdminGui {
 		@Override
 		public void actionPerformed(ActionEvent arg0) {
 			String name = textFieldNome.getText();
+			String logo = textFieldLogo.getText();
 			String descrizione = editorPaneDescrizione.getText();
-			String luogo = textFieldLuogo.getText();
+			String luogo = textFieldLuogo.getText();										
 			
-			String sql = "INSERT INTO convegni (nome, logo, descrizione, luogo) VALUES" + 
-    	   				 "('"+name+"', '0','"+descrizione+"','"+luogo+"')";
+			String url = "http://localhost:8080/helloworldrest1/users/upload";
+			String charset = "UTF-8";
+			File binaryFile = new File(logo);
+			String boundary = Long.toHexString(System.currentTimeMillis()); // Just generate some unique random value.
+			String CRLF = "\r\n"; // Line separator required by multipart/form-data.
 			
-			try {
+			try { 
+				URLConnection connection = new URL(url).openConnection();
+				connection.setDoOutput(true);				
+				connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+			    OutputStream output = connection.getOutputStream();
+			    PrintWriter writer = new PrintWriter(new OutputStreamWriter(output, charset), true);
+			 
+
+			    // Send binary file.
+			    writer.append("--" + boundary).append(CRLF);
+			    writer.append("Content-Disposition: form-data; name=\"recFile\"; filename=\"" + binaryFile.getName() + "\"").append(CRLF);
+			    writer.append("Content-Type: image/jpeg");
+			    writer.append("Content-Transfer-Encoding: binary").append(CRLF);
+			    writer.append(CRLF).flush();
+			    Files.copy(binaryFile.toPath(), output);
+			    output.flush(); // Important before continuing with writer!
+			    writer.append(CRLF).flush(); // CRLF is important! It indicates end of boundary.
+			    
+			    // End of multipart/form-data.
+			    writer.append("--" + boundary + "--").append(CRLF).flush();
+			    
+			    //Request is lazily fired whenever you need to obtain information about response.
+				int responseCode = ((HttpURLConnection) connection).getResponseCode();
+				System.out.println(responseCode); // Should be 200
+				
+				String sql = "INSERT INTO convegni (nome, logo, descrizione, luogo) VALUES" + 
+		   				 "('"+name+"', '"+binaryFile.getName()+"','"+descrizione+"','"+luogo+"')";
+				
 				Database db = new Database();
 				db.databaseInsert(sql);										
 				modelUpdate();
@@ -343,10 +392,25 @@ public class AdminGui {
 				
 				panelPartecipanti.add(comboBoxPartecipanti, "cell 1 2 7 1,grow");
 				panelProgramma.add(comboBoxConvegni, "cell 1 0,growx");
-			} catch (IOException e) {
+			}catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			
+		
+		
+		}
+		
+	}
+	
+	private class FileChooserFrame implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent arg0) {		
+			JFileChooser fileChooser = new JFileChooser();
+			int n = fileChooser.showOpenDialog(null);
+			if(n!=1)
+				textFieldLogo.setText(fileChooser.getSelectedFile().toString());
 		}
 		
 	}

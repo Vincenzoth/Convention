@@ -1,15 +1,22 @@
 package helloworldrest;
 
 import java.io.*;
+
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
+import org.apache.tomcat.util.http.fileupload.FileItemIterator;
+import org.apache.tomcat.util.http.fileupload.FileItemStream;
+import org.apache.tomcat.util.http.fileupload.FileUploadException;
+import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 //Sets  the path to base URL +  /users
 @Path("/users")
 public class RestPath {
+	private static final String SERVER_UPLOAD_LOCATION_FOLDER = "C:\\Convegno\\Logo\\";
 	/*
 	@GET
 	@Produces(MediaType.TEXT_PLAIN)
@@ -71,5 +78,56 @@ public class RestPath {
 		//String output = "POST  REQUEST:  " + msg;
 		return Response.status(200).entity(output).build();
 	}
+	
+	@POST
+	@Path("upload")
+	@Consumes("multipart/form-data")
+	@Produces("application/json")
+	public void uploadFile(@Context HttpServletRequest request) {		
+		String fileName = "";
+		ServletFileUpload upload = new ServletFileUpload();
+        FileItemIterator fileIterator;                
+        
+        
+		File directoryRoot = new File("C:\\Convegno\\Logo\\");
+		// if the directory does not exist, create it
+		if (!directoryRoot.exists()) {
+			directoryRoot.mkdirs();	
+		}
+        
+		try {
+			fileIterator = upload.getItemIterator(request);				
+			while (fileIterator.hasNext()) {								
+	            FileItemStream item = fileIterator.next();
+	            if ("recFile".equals(item.getFieldName())){	              
+	              fileName = SERVER_UPLOAD_LOCATION_FOLDER + item.getName();
+	              //name=item.getName();
+	              saveFile(item.openStream(),fileName);	    	              
+	            }
+	        }
+		} catch (FileUploadException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	// save uploaded file to a defined location on the server
+		private void saveFile(InputStream uploadedInputStream,
+		String serverLocation) {
+			try {			
+				int read = 0;
+				byte[] bytes = new byte[1024];
+				OutputStream outpuStream = new FileOutputStream(new File(serverLocation));
+				System.out.println(serverLocation);
+				while ((read = uploadedInputStream.read(bytes)) != -1) {
+					outpuStream.write(bytes, 0, read);
+				}
+				outpuStream.flush();
+				outpuStream.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 
 }
