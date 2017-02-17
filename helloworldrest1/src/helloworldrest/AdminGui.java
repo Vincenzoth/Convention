@@ -268,6 +268,8 @@ public class AdminGui {
 
 		@Override
 		public void actionPerformed(ActionEvent arg0) {
+			Item item = (Item)comboBoxPartecipanti.getSelectedItem();	        
+			String idConvegno = item.getId();	
 			String name = textFieldNomePartecipante.getText();
 			String surname = textFieldCognomePartecipante.getText();			
 			Scopus scopus = new Scopus(name, surname);
@@ -285,8 +287,9 @@ public class AdminGui {
 			            if(rdbtnOrganizzatore.isSelected())
 			         	   organizzatore=1;
 						String sql = "INSERT INTO partecipanti (id_convegno, id_partecipante,tipologia) VALUES" + 
-		        	   			"('3666', '"+table.getModel().getValueAt(modelRow, 0).toString()+"','"+organizzatore+"')";
-						databaseInsert(sql);
+		        	   			"('"+idConvegno+"', '"+table.getModel().getValueAt(modelRow, 0).toString()+"','"+organizzatore+"')";
+						Database db = new Database();
+						db.databaseInsert(sql);						
 					} catch (IOException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
@@ -326,7 +329,8 @@ public class AdminGui {
     	   				 "('"+name+"', '0','"+descrizione+"','"+luogo+"')";
 			
 			try {
-				databaseInsert(sql);							
+				Database db = new Database();
+				db.databaseInsert(sql);										
 				modelUpdate();
 				
 				panelProgramma.remove(comboBoxConvegni);
@@ -361,7 +365,9 @@ public class AdminGui {
 	   				 	 "('"+idConvegno+"', '"+localDate+"','"+localTime+"','"+programma+"')";
 			//System.out.println(sql);
 			try {
-				databaseInsert(sql);
+				
+				Database db = new Database();
+				db.databaseInsert(sql);	
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -374,7 +380,8 @@ public class AdminGui {
 	private void modelUpdate(){
 		String sql = "SELECT id, nome FROM convegni";
 		try {
-			Map<String,String> result=databaseSelect(sql);			
+			Database db = new Database();			
+			Map<String,String> result=db.databaseConventionList(sql);			
 			modelComboBox = new Vector();	        
 			for(String  key : result.keySet()){
 				modelComboBox.addElement( new Item(key, result.get(key) ) );				
@@ -383,173 +390,6 @@ public class AdminGui {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
-	
-	private void databaseInsert(String sql) throws IOException {
-		  /**
-        * 3306 is the default port for MySQL in XAMPP. Note both the 
-        * MySQL server and Apache must be running. 
-        */
-				
-       String url = "jdbc:mysql://localhost:3306/";
-       
-       /**
-        * The MySQL user.
-        */
-       String user = "root";
-       
-       /**
-        * Password for the above MySQL user. If no password has been 
-        * set (as is the default for the root user in XAMPP's MySQL),
-        * an empty string can be used.
-        */
-       String password = "";              
-       
-       try
-       {
-           Class.forName("com.mysql.jdbc.Driver").newInstance();
-           Connection con = DriverManager.getConnection(url, user, password);
-           
-           Statement stt = con.createStatement();
-           
-           /**
-            * Create and select a database for use. 
-            */
-          // stt.execute("CREATE DATABASE IF NOT EXISTS hellosmile");
-           stt.execute("USE test");
-           
-           /**
-            * Create an example table
-            */
-           //stt.execute("DROP TABLE IF EXISTS music");
-          // stt.execute("CREATE TABLE music (" +
-          //         "id BIGINT NOT NULL AUTO_INCREMENT,"
-          //         + "emotion VARCHAR(25),"
-           //        + "url VARCHAR(25),"
-           //        + "PRIMARY KEY(id)"
-           //        + ")");
-           
-           /**
-            * Add entries to the example table
-            */
-           //stt.execute("INSERT INTO music (emotion, url) VALUES" + 
-                //   "('sadness', 'Bloggs'), ('happy', 'Bloggs'), ('anger', 'Hill')");
-           
-           /**
-            * Query people entries with the lname 'Bloggs'
-            */
-           //Random r = new Random();           
-                      
-           //String sql = "SELECT * FROM partecipanti";            
-           System.out.println(sql);
-           //ResultSet res = stt.executeQuery(sql);
-           stt.execute(sql);
-           
-           /**
-            * Iterate over the result set from the above query
-            */
-          /* while (res.next())
-           {
-               System.out.println(res.getString("id_convegno"));
-               //music = res.getString("music");
-           }
-           System.out.println("");
-           
-           /**
-            * Free all opened resources
-            */
-          // res.close();
-           stt.close();            
-           con.close();            
-           
-       }
-       catch (Exception e)
-       {
-           e.printStackTrace();
-       }
-              
-	}
-
-	private Map<String,String> databaseSelect(String sql) throws IOException {
-		  /**
-	  * 3306 is the default port for MySQL in XAMPP. Note both the 
-	  * MySQL server and Apache must be running. 
-	  */
-				
-	 String url = "jdbc:mysql://localhost:3306/";
-	
-	 /**
-	  * The MySQL user.
-	  */
-	 String user = "root";
-	
-	 /**
-	  * Password for the above MySQL user. If no password has been 
-	  * set (as is the default for the root user in XAMPP's MySQL),
-	  * an empty string can be used.
-	  */
-	 String password = "";
-	
-	 Map<String,String> result = new HashMap<String,String>();
-	
-	 try
-	 {
-	     Class.forName("com.mysql.jdbc.Driver").newInstance();
-	     Connection con = DriverManager.getConnection(url, user, password);
-	     
-	     Statement stt = con.createStatement();
-	     
-	     /**
-	      * Create and select a database for use. 
-	      */
-	    // stt.execute("CREATE DATABASE IF NOT EXISTS hellosmile");
-	     stt.execute("USE test");
-	     
-	     /**
-	      * Create an example table
-	      */
-	     //stt.execute("DROP TABLE IF EXISTS music");
-	    // stt.execute("CREATE TABLE music (" +
-	    //         "id BIGINT NOT NULL AUTO_INCREMENT,"
-	    //         + "emotion VARCHAR(25),"
-	     //        + "url VARCHAR(25),"
-	     //        + "PRIMARY KEY(id)"
-	     //        + ")");
-	     
-	     /**
-	      * Add entries to the example table
-	      */
-	     //stt.execute("INSERT INTO music (emotion, url) VALUES" + 
-	          //   "('sadness', 'Bloggs'), ('happy', 'Bloggs'), ('anger', 'Hill')");
-	     
-	     /**
-	      * Query people entries with the lname 'Bloggs'
-	      */
-	     //Random r = new Random();        
-	     //String sql = "SELECT * FROM partecipanti";            
-	     System.out.println(sql);
-	     ResultSet res = stt.executeQuery(sql);	     
-	     	     
-	     while (res.next())
-	     {	             	    	 
-	    	 result.put(res.getString("id"),res.getString("nome"));
-	     }	
-	     
-	     /**
-	      * Free all opened resources
-	      */
-	     res.close();
-	     stt.close();            
-	     con.close();            
-	     
-	 }
-	 catch (Exception e)
-	 {
-	     e.printStackTrace();
-	 }
-	    
-	 	return result;
-	
 	}
 	
 	class ItemRenderer extends BasicComboBoxRenderer

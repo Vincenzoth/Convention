@@ -9,7 +9,7 @@ import org.jsoup.nodes.Document;
 
 //Sets  the path to base URL +  /users
 @Path("/users")
-public class Hello {
+public class RestPath {
 	/*
 	@GET
 	@Produces(MediaType.TEXT_PLAIN)
@@ -54,12 +54,22 @@ public class Hello {
 		return "<html> " + "<title>" + "Hello " + user_name + "</title>" + "<body><h1>" + "Hello  " + user_name
 				+ " written in HTML  format" + "</body></h1>" + "</html> ";
 	}
-/*
-	@POST
-	@Path("/post")
-	public Response p ostStrMsg(String msg) {
-		String output = "POST  REQUEST:  " + msg;
+*/
+	@GET
+	@Path("/convegni")
+	public Response postStrMsg(String msg) {
+		String output = null;
+		try {
+			String sql="SELECT * FROM convegni";
+			Database db = new Database();
+			output=db.databaseJsonSelect(sql);
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		//String output = "POST  REQUEST:  " + msg;
 		return Response.status(200).entity(output).build();
 	}
-*/
+
 }
