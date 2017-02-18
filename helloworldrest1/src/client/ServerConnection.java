@@ -11,6 +11,9 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 
 public class ServerConnection {
@@ -91,5 +94,34 @@ public class ServerConnection {
         
         return null;
 	}
+	
+	public String jsonMaps(String city, String address){
+
+        HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead
+        
+        try {
+
+        		city = URLEncoder.encode(city, "UTF-8");
+        		address = URLEncoder.encode(address, "UTF-8");
+        	    HttpGet httpGet = new HttpGet("http://maps.google.com/maps/api/geocode/json?address="+address+","+city+",+IT");
+
+        	    HttpResponse response = httpClient.execute(httpGet);
+        	    System.out.println(response.toString());
+        	    BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+        	    String content="", line;
+        	    while ((line = br.readLine()) != null) {
+        	         content = content + line;
+        	    }
+        	    //System.out.print(content);            	    
+        	    return content;
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
+        return null;
+	}
+
 	
 }

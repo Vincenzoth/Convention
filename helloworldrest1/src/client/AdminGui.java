@@ -17,7 +17,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 import java.util.HashMap;
-
+import java.util.List;
 import java.util.Vector;
 
 import javax.swing.JFrame;
@@ -50,6 +50,8 @@ import javax.swing.JEditorPane;
 
 import javax.swing.JRadioButton;
 import com.toedter.components.JSpinField;
+
+
 import com.github.lgooddatepicker.components.TimePicker;
 import com.github.lgooddatepicker.components.DatePicker;
 
@@ -64,7 +66,7 @@ public class AdminGui {
 	DefaultTableModel model;
 	private JTextField textFieldNome;
 	private JTextField textFieldLogo;
-	private JTextField textFieldLuogo;
+	private JTextField textFieldCitta;
 	private JRadioButton rdbtnOrganizzatore;
 	private JRadioButton rdbtnPartecipante;
 	private JEditorPane editorPaneDescrizione;
@@ -81,6 +83,14 @@ public class AdminGui {
 	private JButton btnFileChooser;
 
 	private ServerConnection conn;
+	private JLabel lblIndirizzo;
+	private JTextField textFieldIndirizzo;
+	private JLabel lblCoordinate;
+	private JTextField textFieldCoordinates;
+	private JButton btnTrovaCoordinate;
+	
+	private Double lat;
+	private Double lng;
 
 	/**
 	 * Launch the application.
@@ -120,42 +130,60 @@ public class AdminGui {
 
 		panelConvegno = new JPanel();
 		tabbedPane.addTab("Convegno", null, panelConvegno, null);
-		panelConvegno.setLayout(new MigLayout("", "[][grow]", "[][][][grow][][]"));
+		panelConvegno.setLayout(new MigLayout("", "[][grow][][][][][][][]", "[][][][][grow][][]"));
 
 		Label labelNome = new Label("Nome:");
 		panelConvegno.add(labelNome, "cell 0 0,growx");
 
 		textFieldNome = new JTextField();
-		panelConvegno.add(textFieldNome, "cell 1 0,growx");
+		panelConvegno.add(textFieldNome, "cell 1 0 8 1,growx");
 		textFieldNome.setColumns(10);
 
 		JLabel lblLogo = new JLabel("Logo:");
 		panelConvegno.add(lblLogo, "cell 0 1,growx");
 
 		textFieldLogo = new JTextField();
-		panelConvegno.add(textFieldLogo, "flowx,cell 1 1,growx");
+		panelConvegno.add(textFieldLogo, "cell 1 1 7 1,growx");
 		textFieldLogo.setColumns(10);
+				
+						btnFileChooser = new JButton("...");
+						btnFileChooser.addActionListener(new FileChooserFrame());
+						panelConvegno.add(btnFileChooser, "cell 8 1,growx");
+		
+				JLabel lblCitta = new JLabel("Citt\u00E0:");
+				panelConvegno.add(lblCitta, "cell 0 2,grow");
+		
+				textFieldCitta = new JTextField();
+				panelConvegno.add(textFieldCitta, "flowx,cell 1 2,growx");
+				textFieldCitta.setColumns(10);
+		
+		lblIndirizzo = new JLabel("Indirizzo:");
+		panelConvegno.add(lblIndirizzo, "cell 2 2");
+		
+		textFieldIndirizzo = new JTextField();
+		panelConvegno.add(textFieldIndirizzo, "cell 3 2 5 1,growx");
+		textFieldIndirizzo.setColumns(10);
+		
+		btnTrovaCoordinate = new JButton("Trova Coordinate");
+		btnTrovaCoordinate.addActionListener(new SendButtonGetCoordinates());
+		panelConvegno.add(btnTrovaCoordinate, "cell 8 2");
+		
+		lblCoordinate = new JLabel("Coordinate:");
+		panelConvegno.add(lblCoordinate, "cell 0 3,alignx trailing,growy");
+		
+		textFieldCoordinates = new JTextField();
+		panelConvegno.add(textFieldCoordinates, "cell 1 3 8 1,growx");
+		textFieldCoordinates.setColumns(10);
 
 		JLabel lblDescrizione = new JLabel("Descrizione:");
-		panelConvegno.add(lblDescrizione, "cell 0 3,growx,aligny top");
+		panelConvegno.add(lblDescrizione, "cell 0 4,growx,aligny top");
 
 		editorPaneDescrizione = new JEditorPane();
-		panelConvegno.add(editorPaneDescrizione, "cell 1 3,grow");
-
-		JLabel lblLuogo = new JLabel("Luogo:");
-		panelConvegno.add(lblLuogo, "cell 0 4,grow");
-
-		textFieldLuogo = new JTextField();
-		panelConvegno.add(textFieldLuogo, "cell 1 4,growx");
-		textFieldLuogo.setColumns(10);
-
-		JButton btnInviaConvegno = new JButton("Invia");
-		btnInviaConvegno.addActionListener(new SendButtonListenerConvegno());
-		panelConvegno.add(btnInviaConvegno, "cell 1 5,alignx right");
-
-		btnFileChooser = new JButton("...");
-		btnFileChooser.addActionListener(new FileChooserFrame());
-		panelConvegno.add(btnFileChooser, "cell 1 1");
+		panelConvegno.add(editorPaneDescrizione, "cell 1 4 8 2,grow");
+		
+				JButton btnInviaConvegno = new JButton("Invia");
+				btnInviaConvegno.addActionListener(new SendButtonListenerConvegno());
+				panelConvegno.add(btnInviaConvegno, "cell 8 6,alignx right");
 
 		panelProgramma = new JPanel();
 		tabbedPane.addTab("Programma", null, panelProgramma, null);
@@ -261,7 +289,33 @@ public class AdminGui {
 
 		JButton btnInviaPartecipante = new JButton("Invia");
 		btnInviaPartecipante.addActionListener(new SendButtonListenerPartecipanti());
-		panelPartecipanti.add(btnInviaPartecipante, "cell 7 9,alignx right");
+		panelPartecipanti.add(btnInviaPartecipante, "cell 7 9,alignx right");		
+		
+	}
+	
+	private class SendButtonGetCoordinates implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent arg0) {
+			String city = textFieldCitta.getText();
+			String address = textFieldIndirizzo.getText();
+			String jsonMaps=conn.jsonMaps(city, address);
+			System.out.println(jsonMaps);
+			 
+			try {
+				JSONObject jo = new JSONObject(jsonMaps);
+				lat = jo.getJSONArray("results").getJSONObject(0).getJSONObject("geometry").getJSONObject("location").getDouble("lat");
+				lng = jo.getJSONArray("results").getJSONObject(0).getJSONObject("geometry").getJSONObject("location").getDouble("lng");
+				
+				textFieldCoordinates.setText("Latitudine: "+lat+" Longitudine: "+lng);
+				System.out.println(lat+" "+lng);
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+
 	}
 
 	private class SendButtonListenerPartecipanti implements ActionListener {
@@ -316,7 +370,9 @@ public class AdminGui {
 			String name = textFieldNome.getText();
 			String logo = textFieldLogo.getText();
 			String descrizione = editorPaneDescrizione.getText();
-			String luogo = textFieldLuogo.getText();
+			String citta = textFieldCitta.getText();
+			String indirizzo = textFieldIndirizzo.getText();
+			
 
 			String url = "http://localhost:8080/helloworldrest1/users/upload";
 			String charset = "UTF-8";
@@ -329,6 +385,9 @@ public class AdminGui {
 																			// value.
 			String CRLF = "\r\n"; // Line separator required by
 									// multipart/form-data.
+			
+			
+			
 
 			try {
 				URLConnection connection = new URL(url).openConnection();
@@ -358,8 +417,8 @@ public class AdminGui {
 				int responseCode = ((HttpURLConnection) connection).getResponseCode();
 				System.out.println(responseCode); // Should be 200
 
-				String sql = "INSERT INTO convegni (nome, logo, descrizione, luogo) VALUES" + "('" + name + "', '"
-						+ binaryFile.getName() + "','" + descrizione + "','" + luogo + "')";
+				String sql = "INSERT INTO convegni (nome, logo, descrizione, citta, indirizzo, longitudine, latitudine) VALUES" + "('" + name + "', '"
+						+ binaryFile.getName() + "','" + descrizione + "','" + citta + "','" + indirizzo + "','" + lng + "','" + lat + "')";
 
 				conn.databaseInsert(sql);
 				modelUpdate();
@@ -419,7 +478,7 @@ public class AdminGui {
 		String sql = "SELECT id, nome FROM convegni";
 		try {
 			String json = conn.databaseSelect(sql);
-
+			System.out.println(json);
 			HashMap<String, String> map = new HashMap<String, String>();
 			JSONObject jObject = new JSONObject(json);
 			JSONArray arr = jObject.getJSONArray("convegni");
