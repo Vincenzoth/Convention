@@ -1,4 +1,4 @@
-package helloworldrest;
+package client;
 
 import java.awt.*;
 import java.awt.event.*;

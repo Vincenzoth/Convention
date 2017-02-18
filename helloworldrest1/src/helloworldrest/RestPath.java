@@ -1,6 +1,7 @@
 package helloworldrest;
 
 import java.io.*;
+import java.net.URLDecoder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
@@ -61,7 +62,79 @@ public class RestPath {
 		return "<html> " + "<title>" + "Hello " + user_name + "</title>" + "<body><h1>" + "Hello  " + user_name
 				+ " written in HTML  format" + "</body></h1>" + "</html> ";
 	}
-*/
+*/		
+	/*
+	@GET
+	@Path("/dbConventionList")
+	public Response dbConventionList(@QueryParam("sql")  String sql) {
+		String json = "";
+		try {
+			//String sql="SELECT * FROM convegni";
+			Database db = new Database();
+			db.databaseConventionList(sql);			
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		//String output = "POST  REQUEST:  " + msg;
+		return Response.status(200).entity(json).build();
+	}
+	*/
+	@GET
+	@Path("/dbSelect")
+	public Response dbSelect(@QueryParam("sql")  String sql) {
+		String json = "";		
+		try {
+			sql = URLDecoder.decode(sql, "UTF-8");
+			System.out.println("server "+sql);
+			//String sql="SELECT * FROM convegni";
+			Database db = new Database();
+			json=db.databaseJsonSelect(sql);			
+			System.out.println(json);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		//String output = "POST  REQUEST:  " + msg;
+		return Response.status(200).entity(json).build();
+	}		
+	
+	@GET
+	@Path("/dbInsert")
+	public void dbInsert(@QueryParam("sql")  String sql) {
+		String output = null;
+		System.out.println("Mi hai chiamato?");
+		try {
+			//String sql="SELECT * FROM convegni";
+			Database db = new Database();
+			db.databaseInsert(sql);			
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		//String output = "POST  REQUEST:  " + msg;
+		//return Response.status(200).entity(output).build();
+	}
+	
+	@GET
+	@Path("/scopus")
+	public Response dbSelect(@QueryParam("nome") String nome, @QueryParam("cognome") String cognome) {
+		try {
+			nome = URLDecoder.decode(nome, "UTF-8");
+			cognome = URLDecoder.decode(cognome, "UTF-8");
+			Scopus scopus = new Scopus(nome, cognome);		
+			return Response.status(200).entity(scopus.webScraping()).build();
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
+		return Response.status(500).entity("Errore").build();
+	}
+	
 	@GET
 	@Path("/convegni")
 	public Response postStrMsg(String msg) {
